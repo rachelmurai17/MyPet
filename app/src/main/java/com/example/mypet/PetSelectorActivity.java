@@ -2,6 +2,7 @@ package com.example.mypet;
 
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
+import android.support.v4.app.NotificationCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 
@@ -17,6 +18,12 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import android.widget.TextView;
+
+import com.example.mypet.persistence.Pet;
+
+import org.w3c.dom.Text;
+
+import java.util.List;
 
 public class PetSelectorActivity extends AppCompatActivity {
 
@@ -34,6 +41,16 @@ public class PetSelectorActivity extends AppCompatActivity {
      * The {@link ViewPager} that will host the section contents.
      */
     private ViewPager mViewPager;
+
+    /**
+     * The cached list of pets.
+     */
+    private List<Pet> mPets;
+
+    void setPets(List<Pet> pets){
+        mPets = pets;
+        //notifyDataSetChanged();
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -85,6 +102,34 @@ public class PetSelectorActivity extends AppCompatActivity {
     }
 
     /**
+     * A fragment containing the pet view.
+     */
+    public static class PetFragment extends Fragment {
+
+        private static final String ARG_ID = "id";
+
+        public PetFragment() {
+        }
+
+        public static PetFragment newInstance(int id) {
+            PetFragment fragment = new PetFragment();
+            Bundle args = new Bundle();
+            args.putInt(ARG_ID, id);
+            fragment.setArguments(args);
+            return fragment;
+        }
+
+        @Override
+        public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                                 Bundle savedInstanceState) {
+            View rootView = inflater.inflate(R.layout.fragment_pet_selector, container, false);
+            TextView textView = (TextView) rootView.findViewById(R.id.section_label);
+            textView.setText(getString(R.string.section_format, getArguments().getInt(ARG_ID)));
+            return rootView;
+        }
+    }
+
+    /**
      * A placeholder fragment containing a simple view.
      */
     public static class PlaceholderFragment extends Fragment {
@@ -133,13 +178,16 @@ public class PetSelectorActivity extends AppCompatActivity {
         public Fragment getItem(int position) {
             // getItem is called to instantiate the fragment for the given page.
             // Return a PlaceholderFragment (defined as a static inner class below).
-            return PlaceholderFragment.newInstance(position + 1);
+            return PetFragment.newInstance(position + 1);
         }
 
         @Override
         public int getCount() {
-            // Show 3 total pages.
-            return 3;
+            if (mPets != null) {
+                return mPets.size();
+            } else {
+                return 0;
+            }
         }
     }
 }
