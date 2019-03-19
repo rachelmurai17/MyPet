@@ -1,5 +1,11 @@
 package com.example.mypet;
 
+import android.arch.lifecycle.LiveData;
+import android.arch.lifecycle.Observer;
+import android.arch.lifecycle.ViewModelProvider;
+import android.arch.lifecycle.ViewModelProviders;
+import android.content.Intent;
+import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.NotificationCompat;
@@ -42,15 +48,12 @@ public class PetSelectorActivity extends AppCompatActivity {
      */
     private ViewPager mViewPager;
 
+    private PetViewModel mPetViewModel;
+
     /**
      * The cached list of pets.
      */
     private List<Pet> mPets;
-
-    void setPets(List<Pet> pets){
-        mPets = pets;
-        //notifyDataSetChanged();
-    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -67,12 +70,26 @@ public class PetSelectorActivity extends AppCompatActivity {
         mViewPager = (ViewPager) findViewById(R.id.container);
         mViewPager.setAdapter(mSectionsPagerAdapter);
 
+        // Set the ViewModel using ViewModelProviders to persist the ViewModel after the activity is destroyed.
+        mPetViewModel = ViewModelProviders.of(this).get(PetViewModel.class);
+
+        // Observer for the LiveData returned by listPets()
+        mPetViewModel.listPets().observe(this, new Observer<List<Pet>>() {
+            @Override
+            public void onChanged(@Nullable List<Pet> pets) {
+                // Update the cached copy of pets in the adapter
+                mSectionsPagerAdapter.setPets(pets);
+            }
+        });
+
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Snackbar.make(view, "Add pet action coming soon", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
+//                Snackbar.make(view, "Add pet action coming soon", Snackbar.LENGTH_LONG)
+//                        .setAction("Action", null).show();
+                Intent mIntent = new Intent(PetSelectorActivity.this, AddPetActivity.class);
+                startActivity(mIntent);
             }
         });
 
@@ -130,41 +147,6 @@ public class PetSelectorActivity extends AppCompatActivity {
     }
 
     /**
-     * A placeholder fragment containing a simple view.
-     */
-    public static class PlaceholderFragment extends Fragment {
-        /**
-         * The fragment argument representing the section number for this
-         * fragment.
-         */
-        private static final String ARG_SECTION_NUMBER = "section_number";
-
-        public PlaceholderFragment() {
-        }
-
-        /**
-         * Returns a new instance of this fragment for the given section
-         * number.
-         */
-        public static PlaceholderFragment newInstance(int sectionNumber) {
-            PlaceholderFragment fragment = new PlaceholderFragment();
-            Bundle args = new Bundle();
-            args.putInt(ARG_SECTION_NUMBER, sectionNumber);
-            fragment.setArguments(args);
-            return fragment;
-        }
-
-        @Override
-        public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                                 Bundle savedInstanceState) {
-            View rootView = inflater.inflate(R.layout.fragment_pet_selector, container, false);
-            TextView textView = (TextView) rootView.findViewById(R.id.section_label);
-            textView.setText(getString(R.string.section_format, getArguments().getInt(ARG_SECTION_NUMBER)));
-            return rootView;
-        }
-    }
-
-    /**
      * A {@link FragmentPagerAdapter} that returns a fragment corresponding to
      * one of the sections/tabs/pages.
      */
@@ -188,6 +170,11 @@ public class PetSelectorActivity extends AppCompatActivity {
             } else {
                 return 0;
             }
+        }
+
+        void setPets(List<Pet> pets) {
+            mPets = pets;
+            notifyDataSetChanged();
         }
     }
 }
